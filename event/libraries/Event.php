@@ -63,7 +63,7 @@ class Event {
 		//	Admins logged in as people shouldn't be creating events, GHOST MODE, woooooooo
 		//	Ghost mode runs on production only, all other environments generate events (for testing)
 
-		if ( ENVIRONMENT == 'production' && get_userobject()->was_admin() ) :
+		if ( strtoupper( ENVIRONMENT ) == 'PRODUCTION' && get_userobject()->was_admin() ) :
 
 			return TRUE;
 
