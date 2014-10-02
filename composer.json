@@ -1,10 +1,17 @@
 {
 	"name": "nailsapp/module-event",
-	"keywords": ["Nails","Shed Collective","CodeIgniter", "Event Module"],
+	"keywords":
+	[
+		"Nails",
+		"Shed Collective",
+		"CodeIgniter",
+		"Event Module"
+	],
 	"homepage": "http://nailsapp.co.uk/modules/event",
 	"description": "This the \"Event\" module for Nails.",
-	"license":"MIT",
-	"authors": [
+	"license": "MIT",
+	"authors":
+	[
 		{
 			"name": "Pablo de la Pena",
 			"email": "p@shedcollective.org",
@@ -18,11 +25,11 @@
 			"role": "Developer"
 		}
 	],
-	"support": {
+	"support":
+	{
 		"email": "hello@shedcollective.org"
 	},
 	"require":
 	{
-		"php": ">=5.4.0"
 	}
 }
