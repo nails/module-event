@@ -8,14 +8,13 @@
  * @category    Library
  * @author      Nails Dev Team
  * @link
- * @todo  Update to use NAILS_COMMON_TRAIT_GETCOUNT_COMMON
  */
 
 class Event
 {
     //  Class traits
     use NAILS_COMMON_TRAIT_ERROR_HANDLING;
-    use NAILS_COMMON_TRAIT_CACHING;
+    use NAILS_COMMON_TRAIT_GETCOUNT_COMMON;
 
     private $ci;
     private $db;
@@ -315,49 +314,44 @@ class Event
      * @param  string $where A search string compatible with CI's where() method
      * @return array
      */
-    public function get_all($order = null, $limit = null, $where = null)
+    public function get_all($page = null, $perPage = null, $data = array(), $_caller = 'GET_ALL')
     {
         //  Fetch all objects from the table
         $this->db->select($this->_table_prefix . '.*');
         $this->db->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
 
+        //  Apply common items; pass $data
+        $this->_getcount_common_event($data, $_caller);
+
         // --------------------------------------------------------------------------
 
-        //  Sorting
-        if (is_array($order)) {
+        //  Facilitate pagination
+        if (!is_null($page)) {
 
-            $this->db->order_by($order[0], $order[1]);
+            /**
+             * Adjust the page variable, reduce by one so that the offset is calculated
+             * correctly. Make sure we don't go into negative numbers
+             */
 
-        } else {
+            $page--;
+            $page = $page < 0 ? 0 : $page;
 
-            $this->db->order_by($this->_table_prefix . '.created', 'DESC');
+            //  Work out what the offset should be
+            $perPage = is_null($perPage) ? 50 : (int) $perPage;
+            $offset  = $page * $perPage;
+
+            $this->db->limit($perPage, $offset);
         }
-
-        // --------------------------------------------------------------------------
-
-        //  Set Limit
-        if (is_array($limit)) {
-
-            $this->db->limit($limit[0], $limit[1]);
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Build conditionals
-        $this->_getcount_common($where);
 
         // --------------------------------------------------------------------------
 
         $events = $this->db->get($this->_table . ' ' . $this->_table_prefix)->result();
 
-        // --------------------------------------------------------------------------
+        for ($i = 0; $i < count($events); $i++) {
 
-        foreach ($events as $event) {
-
-            $this->_format_event_object($event);
+            //  Format the object, make it pretty
+            $this->_format_object($events[$i]);
         }
-
-        // --------------------------------------------------------------------------
 
         return $events;
     }
@@ -365,33 +359,44 @@ class Event
     // --------------------------------------------------------------------------
 
     /**
-     * Counts events
-     * @param  string  $where  A search string compatible with CI's where() method
-     * @return integer
-     */
-    public function count_all($where = null)
+     * This method applies the conditionals which are common across the get_*()
+     * methods and the count() method.
+     * @param array  $data    Data passed from the calling method
+     * @param string $_caller The name of the calling method
+     * @return void
+     **/
+    protected function _getcount_common_event($data = array(), $_caller = null)
     {
-        $this->_getcount_common($where);
-        return $this->db->count_all_results($this->_table . ' ' . $this->_table_prefix);
+        if (!empty($data['keywords'])) {
+
+            if (!isset($data['or_like'])) {
+
+                $data['or_like'] = array();
+            }
+
+            $toSlug = strtolower(str_replace(' ', '_', $data['keywords']));
+
+            $data['or_like'][] = array($this->_table_prefix . '.type', $toSlug);
+            $data['or_like'][] = array('ue.email', $data['keywords']);
+        }
+
+        //  Common joins
+        $this->db->join(NAILS_DB_PREFIX . 'user u', $this->_table_prefix . '.created_by = u.id', 'LEFT');
+        $this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
+
+        $this->_getcount_common($data, $_caller);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Applies conditionals for other methods
-     * @param  string $where  A search string compatible with CI's where() method
-     * @return void
+     * Count the total number of events for a certain query
+     * @return int
      */
-    private function _getcount_common($where = null)
+    public function count_all($data)
     {
-        $this->db->join(NAILS_DB_PREFIX . 'user u', $this->_table_prefix . '.created_by = u.id', 'LEFT');
-        $this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
-
-        //  Set Where
-        if ($where) {
-
-            $this->db->where($where);
-        }
+        $this->_getcount_common_event($data, 'COUNT_ALL');
+        return $this->db->count_all_results($this->_table . ' ' . $this->_table_prefix);
     }
 
     // --------------------------------------------------------------------------
@@ -403,20 +408,17 @@ class Event
      */
     public function get_by_id($id)
     {
-        $this->db->where($this->_table_prefix . '.id', $id);
-        $_event = $this->get_all();
+        $data = array('where' => array(array($this->_table_prefix . '.id', $id)));
+        $events = $this->get_all(null, null, $data);
+
+        if (!$events) {
+
+            return false;
+        }
 
         // --------------------------------------------------------------------------
 
-        if ($_event) {
-
-            return $_event[0];
-
-        } else {
-
-            $this->_set_error('No event by that ID (' . $id . ').');
-            return false;
-        }
+        return $events[0];
     }
 
     // --------------------------------------------------------------------------
@@ -428,21 +430,39 @@ class Event
      */
     public function get_by_type($type)
     {
-        $this->db->where($this->_table_prefix . '.type', $type);
-        return $this->get_all();
+        $data = array('where' => array(array($this->_table_prefix . '.type', $type)));
+        $events = $this->get_all(null, null, $data);
+
+        if (!$events) {
+
+            return false;
+        }
+
+        // --------------------------------------------------------------------------
+
+        return $events[0];
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Returns events created by a user
-     * @param  integer $user_id The ID of the user
+     * @param  integer $userId The ID of the user
      * @return array
      */
-    public function get_by_user($user_id)
+    public function get_by_user($userId)
     {
-        $this->db->where($this->_table_prefix . '.created_by', $user_id);
-        return $this->get_all();
+        $data = array('where' => array(array($this->_table_prefix . '.created_by', $userId)));
+        $events = $this->get_all(null, null, $data);
+
+        if (!$events) {
+
+            return false;
+        }
+
+        // --------------------------------------------------------------------------
+
+        return $events[0];
     }
 
     // --------------------------------------------------------------------------
@@ -494,13 +514,24 @@ class Event
      * @param  stdClass $obj The event object to format
      * @return void
      */
-    protected function _format_event_object(&$obj)
+    protected function _format_object(&$obj)
     {
         //  Ints
         $obj->ref = $obj->ref ? (int) $obj->ref : null;
 
         //  Type
-        $obj->type = $this->getType($obj->type);
+        $temp = $this->getType($obj->type);
+
+        if (empty($temp)) {
+
+            $temp = new \stdClass();
+            $temp->slug        = $obj->type;
+            $temp->label       = '';
+            $temp->description = '';
+            $temp->hooks       = array();
+        }
+
+        $obj->type = $temp;
 
         //  Data
         $obj->data = unserialize($obj->data);
