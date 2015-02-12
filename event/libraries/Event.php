@@ -345,15 +345,22 @@ class Event
 
         // --------------------------------------------------------------------------
 
-        $events = $this->db->get($this->_table . ' ' . $this->_table_prefix)->result();
+        if (empty($data['RETURN_QUERY_OBJECT'])) {
 
-        for ($i = 0; $i < count($events); $i++) {
+            $events = $this->db->get($this->_table . ' ' . $this->_table_prefix)->result();
 
-            //  Format the object, make it pretty
-            $this->_format_object($events[$i]);
+            for ($i = 0; $i < count($events); $i++) {
+
+                //  Format the object, make it pretty
+                $this->_format_object($events[$i]);
+            }
+
+            return $events;
+
+        } else {
+
+            return $this->db->get($this->_table . ' ' . $this->_table_prefix);
         }
-
-        return $events;
     }
 
     // --------------------------------------------------------------------------
@@ -404,19 +411,17 @@ class Event
     /**
      * Return an individual event
      * @param  integer $id The event's ID
-     * @return mixed       stdClass on success, FALSE on failure
+     * @return mixed       stdClass on success, false on failure
      */
     public function get_by_id($id)
     {
-        $data = array('where' => array(array($this->_table_prefix . '.id', $id)));
+        $data   = array('where' => array(array($this->_table_prefix . '.id', $id)));
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
 
             return false;
         }
-
-        // --------------------------------------------------------------------------
 
         return $events[0];
     }
@@ -430,15 +435,13 @@ class Event
      */
     public function get_by_type($type)
     {
-        $data = array('where' => array(array($this->_table_prefix . '.type', $type)));
+        $data   = array('where' => array(array($this->_table_prefix . '.type', $type)));
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
 
             return false;
         }
-
-        // --------------------------------------------------------------------------
 
         return $events[0];
     }
@@ -452,15 +455,13 @@ class Event
      */
     public function get_by_user($userId)
     {
-        $data = array('where' => array(array($this->_table_prefix . '.created_by', $userId)));
+        $data   = array('where' => array(array($this->_table_prefix . '.created_by', $userId)));
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
 
             return false;
         }
-
-        // --------------------------------------------------------------------------
 
         return $events[0];
     }
@@ -471,7 +472,7 @@ class Event
      * Returns the differing types of event
      * @return array
      */
-    public function get_types()
+    public function getAllTypes()
     {
         return $this->eventTypes;
     }
@@ -483,7 +484,7 @@ class Event
      * @param  string $slug The event's slug
      * @return mixed        stdClass on success, false on failure
      */
-    public function getType($slug)
+    public function getTypeBySlug($slug)
     {
         return isset($this->eventTypes[$slug]) ? $this->eventTypes[$slug] : false;
     }
@@ -494,9 +495,9 @@ class Event
      * Get the differing types of event as a flat array
      * @return array
      */
-    public function get_types_flat()
+    public function getAllTypesFlat()
     {
-        $types = $this->get_types();
+        $types = $this->getAllTypes();
         $out   = array();
 
         foreach ($types as $type) {
@@ -520,7 +521,7 @@ class Event
         $obj->ref = $obj->ref ? (int) $obj->ref : null;
 
         //  Type
-        $temp = $this->getType($obj->type);
+        $temp = $this->getTypeBySlug($obj->type);
 
         if (empty($temp)) {
 
@@ -551,5 +552,27 @@ class Event
         unset($obj->last_name);
         unset($obj->profile_img);
         unset($obj->gender);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns protected property $_table
+     * @return string
+     */
+    public function getTableName()
+    {
+        return $this->_table;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns protected property $_table_prefix
+     * @return string
+     */
+    public function getTablePrefix()
+    {
+        return $this->_table_prefix;
     }
 }
