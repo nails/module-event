@@ -376,15 +376,21 @@ class Event
     {
         if (!empty($data['keywords'])) {
 
-            if (!isset($data['or_like'])) {
+            if (empty($data['or_like'])) {
 
                 $data['or_like'] = array();
             }
 
             $toSlug = strtolower(str_replace(' ', '_', $data['keywords']));
 
-            $data['or_like'][] = array($this->_table_prefix . '.type', $toSlug);
-            $data['or_like'][] = array('ue.email', $data['keywords']);
+            $data['or_like'][] = array(
+                'column' => $this->_table_prefix . '.type',
+                'value'  => $toSlug
+            );
+            $data['or_like'][] = array(
+                'column' => 'ue.email',
+                'value'  => $data['keywords']
+            );
         }
 
         //  Common joins
