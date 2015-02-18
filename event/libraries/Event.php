@@ -148,7 +148,7 @@ class Event
          * production only, all other environments should generate events so they can be tested.
          */
 
-        if (strtoupper(ENVIRONMENT) == 'PRODUCTION' && $this->user_model->was_admin()) {
+        if (strtoupper(ENVIRONMENT) == 'PRODUCTION' && $this->user_model->wasAdmin()) {
 
             return true;
         }
@@ -182,7 +182,7 @@ class Event
         //  Prep created by
         if (empty($createdBy)) {
 
-            $createdBy = active_user('id') ? (int) active_user('id') : null;
+            $createdBy = activeUser('id') ? (int) activeUser('id') : null;
         }
 
         // --------------------------------------------------------------------------
