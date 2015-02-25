@@ -20,8 +20,8 @@ class Event
     private $db;
     private $user_model;
     private $eventTypes;
-    private $_table;
-    private $_table_prefix;
+    private $table;
+    private $tablePrefix;
 
     // --------------------------------------------------------------------------
 
@@ -38,8 +38,8 @@ class Event
 
         //  Set defaults
         $this->eventTypes    = array();
-        $this->_table        = NAILS_DB_PREFIX . 'event';
-        $this->_table_prefix = 'e';
+        $this->table        = NAILS_DB_PREFIX . 'event';
+        $this->tablePrefix = 'e';
 
         // --------------------------------------------------------------------------
 
@@ -208,7 +208,7 @@ class Event
         }
 
         //  Create the event
-        $this->db->insert($this->_table);
+        $this->db->insert($this->table);
 
         // --------------------------------------------------------------------------
 
@@ -292,7 +292,7 @@ class Event
 
         //  Perform delete
         $this->db->where('id', $id);
-        $this->db->delete($this->_table);
+        $this->db->delete($this->table);
 
         if ($this->db->affected_rows()) {
 
@@ -317,7 +317,7 @@ class Event
     public function get_all($page = null, $perPage = null, $data = array(), $_caller = 'GET_ALL')
     {
         //  Fetch all objects from the table
-        $this->db->select($this->_table_prefix . '.*');
+        $this->db->select($this->tablePrefix . '.*');
         $this->db->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
 
         //  Apply common items; pass $data
@@ -347,7 +347,7 @@ class Event
 
         if (empty($data['RETURN_QUERY_OBJECT'])) {
 
-            $events = $this->db->get($this->_table . ' ' . $this->_table_prefix)->result();
+            $events = $this->db->get($this->table . ' ' . $this->tablePrefix)->result();
 
             for ($i = 0; $i < count($events); $i++) {
 
@@ -359,7 +359,7 @@ class Event
 
         } else {
 
-            return $this->db->get($this->_table . ' ' . $this->_table_prefix);
+            return $this->db->get($this->table . ' ' . $this->tablePrefix);
         }
     }
 
@@ -384,7 +384,7 @@ class Event
             $toSlug = strtolower(str_replace(' ', '_', $data['keywords']));
 
             $data['or_like'][] = array(
-                'column' => $this->_table_prefix . '.type',
+                'column' => $this->tablePrefix . '.type',
                 'value'  => $toSlug
             );
             $data['or_like'][] = array(
@@ -394,7 +394,7 @@ class Event
         }
 
         //  Common joins
-        $this->db->join(NAILS_DB_PREFIX . 'user u', $this->_table_prefix . '.created_by = u.id', 'LEFT');
+        $this->db->join(NAILS_DB_PREFIX . 'user u', $this->tablePrefix . '.created_by = u.id', 'LEFT');
         $this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
 
         $this->_getcount_common($data, $_caller);
@@ -409,7 +409,7 @@ class Event
     public function count_all($data)
     {
         $this->_getcount_common_event($data, 'COUNT_ALL');
-        return $this->db->count_all_results($this->_table . ' ' . $this->_table_prefix);
+        return $this->db->count_all_results($this->table . ' ' . $this->tablePrefix);
     }
 
     // --------------------------------------------------------------------------
@@ -421,7 +421,7 @@ class Event
      */
     public function get_by_id($id)
     {
-        $data   = array('where' => array(array($this->_table_prefix . '.id', $id)));
+        $data   = array('where' => array(array($this->tablePrefix . '.id', $id)));
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
@@ -441,7 +441,7 @@ class Event
      */
     public function get_by_type($type)
     {
-        $data   = array('where' => array(array($this->_table_prefix . '.type', $type)));
+        $data   = array('where' => array(array($this->tablePrefix . '.type', $type)));
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
@@ -461,7 +461,7 @@ class Event
      */
     public function get_by_user($userId)
     {
-        $data   = array('where' => array(array($this->_table_prefix . '.created_by', $userId)));
+        $data   = array('where' => array(array($this->tablePrefix . '.created_by', $userId)));
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
@@ -563,22 +563,22 @@ class Event
     // --------------------------------------------------------------------------
 
     /**
-     * Returns protected property $_table
+     * Returns protected property $table
      * @return string
      */
     public function getTableName()
     {
-        return $this->_table;
+        return $this->table;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Returns protected property $_table_prefix
+     * Returns protected property $tablePrefix
      * @return string
      */
     public function getTablePrefix()
     {
-        return $this->_table_prefix;
+        return $this->tablePrefix;
     }
 }
