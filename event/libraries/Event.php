@@ -421,7 +421,11 @@ class Event
      */
     public function get_by_id($id)
     {
-        $data   = array('where' => array(array($this->tablePrefix . '.id', $id)));
+        $data = array(
+            'where' => array(
+                array($this->tablePrefix . '.id', $id)
+            )
+        );
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
@@ -441,7 +445,11 @@ class Event
      */
     public function get_by_type($type)
     {
-        $data   = array('where' => array(array($this->tablePrefix . '.type', $type)));
+        $data = array(
+            'where' => array(
+                array($this->tablePrefix . '.type', $type)
+            )
+        );
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
@@ -461,7 +469,11 @@ class Event
      */
     public function get_by_user($userId)
     {
-        $data   = array('where' => array(array($this->tablePrefix . '.created_by', $userId)));
+        $data = array(
+            'where' => array(
+                array($this->tablePrefix . '.created_by', $userId)
+            )
+        );
         $events = $this->get_all(null, null, $data);
 
         if (!$events) {
