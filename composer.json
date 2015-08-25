@@ -1,12 +1,6 @@
 {
     "name": "nailsapp/module-event",
-    "keywords":
-    [
-        "Nails",
-        "Shed Collective",
-        "CodeIgniter",
-        "Event Module"
-    ],
+    "keywords": ["Nails", "Shed Collective", "CodeIgniter", "Event Module"],
     "homepage": "http://nailsapp.co.uk/modules/event",
     "description": "This is the \"Event\" module for Nails.",
     "license": "MIT",
