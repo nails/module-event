@@ -26,6 +26,10 @@
     "require":
     {
     },
+    "autoload":
+    {
+        "psr-4": {"Nails\\Event\\": "src/"}
+    },
     "extra":
     {
         "nails" :
