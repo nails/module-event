@@ -14,9 +14,10 @@ namespace Nails\Event\Library;
 
 class Event
 {
-    //  Class traits
-    use \NAILS_COMMON_TRAIT_ERROR_HANDLING;
-    use \NAILS_COMMON_TRAIT_GETCOUNT_COMMON;
+    use \Nails\Common\Traits\ErrorHandling;
+    use \Nails\Common\Traits\GetCountCommon;
+
+    // --------------------------------------------------------------------------
 
     private $oCi;
     private $oDb;
