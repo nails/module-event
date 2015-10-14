@@ -14,8 +14,8 @@ namespace Nails\Event\Library;
 
 class Event
 {
-    use Nails\Common\Traits\ErrorHandling;
-    use Nails\Common\Traits\GetCountCommon;
+    use \Nails\Common\Traits\ErrorHandling;
+    use \Nails\Common\Traits\GetCountCommon;
 
     // --------------------------------------------------------------------------
 
