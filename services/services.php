@@ -3,7 +3,11 @@
 return array(
     'services' => array(
         'Event' => function () {
-            return new \Nails\Event\Library\Event();
+            if (class_exists('\App\Event\Library\Event')) {
+                return new \App\Event\Library\Event();
+            } else {
+                return new \Nails\Event\Library\Event();
+            }
         }
     )
 );
