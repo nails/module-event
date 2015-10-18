@@ -38,7 +38,14 @@
         "nails" :
         {
             "moduleName": "event",
-            "type": "module"
+            "type": "module",
+            "autoload": {
+                "services": [
+                    {
+                        "event": "Event"
+                    }
+                ]
+            }
         }
     }
 }
