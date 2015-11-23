@@ -313,14 +313,14 @@ class Event
      * @param  array   $aData    Any data to pass to _getcount_common
      * @return mixed
      */
-    public function get_all($iPage = null, $iPerPage = null, $aData = array(), $_caller = 'GET_ALL')
+    public function get_all($iPage = null, $iPerPage = null, $aData = array())
     {
         //  Fetch all objects from the table
         $this->oDb->select($this->sTablePrefix . '.*');
         $this->oDb->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
 
         //  Apply common items; pass $aData
-        $this->_getcount_common_event($aData, $_caller);
+        $this->_getcount_common_event($aData);
 
         // --------------------------------------------------------------------------
 
@@ -368,10 +368,9 @@ class Event
      * This method applies the conditionals which are common across the get_*()
      * methods and the count() method.
      * @param array  $aData   Data passed from the calling method
-     * @param string $_caller The name of the calling method
      * @return void
      **/
-    protected function _getcount_common_event($aData = array(), $_caller = null)
+    protected function _getcount_common_event($aData = array())
     {
         if (!empty($aData['keywords'])) {
 
@@ -396,7 +395,7 @@ class Event
         $this->oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTablePrefix . '.created_by = u.id', 'LEFT');
         $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
 
-        $this->_getcount_common($aData, $_caller);
+        $this->_getcount_common($aData);
     }
 
     // --------------------------------------------------------------------------
