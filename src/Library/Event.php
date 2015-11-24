@@ -313,14 +313,14 @@ class Event
      * @param  array   $aData    Any data to pass to _getcount_common
      * @return mixed
      */
-    public function get_all($iPage = null, $iPerPage = null, $aData = array())
+    public function getAll($iPage = null, $iPerPage = null, $aData = array())
     {
         //  Fetch all objects from the table
         $this->oDb->select($this->sTablePrefix . '.*');
         $this->oDb->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
 
         //  Apply common items; pass $aData
-        $this->_getcount_common_event($aData);
+        $this->getCountCommonEvent($aData);
 
         // --------------------------------------------------------------------------
 
@@ -351,7 +351,7 @@ class Event
             for ($i = 0; $i < count($aEvents); $i++) {
 
                 //  Format the object, make it pretty
-                $this->_format_object($aEvents[$i]);
+                $this->formatObject($aEvents[$i]);
             }
 
             return $aEvents;
@@ -370,7 +370,7 @@ class Event
      * @param array  $aData   Data passed from the calling method
      * @return void
      **/
-    protected function _getcount_common_event($aData = array())
+    protected function getCountCommonEvent($aData = array())
     {
         if (!empty($aData['keywords'])) {
 
@@ -395,7 +395,7 @@ class Event
         $this->oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTablePrefix . '.created_by = u.id', 'LEFT');
         $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
 
-        $this->_getcount_common($aData);
+        $this->getCountCommon($aData);
     }
 
     // --------------------------------------------------------------------------
@@ -404,9 +404,9 @@ class Event
      * Count the total number of events for a certain query
      * @return int
      */
-    public function count_all($aData)
+    public function countAll($aData)
     {
-        $this->_getcount_common_event($aData, 'COUNT_ALL');
+        $this->getCountCommonEvent($aData, 'COUNT_ALL');
         return $this->oDb->count_all_results($this->sTable . ' ' . $this->sTablePrefix);
     }
 
@@ -417,14 +417,14 @@ class Event
      * @param  integer $iId The event's ID
      * @return mixed        stdClass on success, false on failure
      */
-    public function get_by_id($iId)
+    public function getById($iId)
     {
         $aData = array(
             'where' => array(
                 array($this->sTablePrefix . '.id', $iId)
             )
         );
-        $aEvents = $this->get_all(null, null, $aData);
+        $aEvents = $this->getAll(null, null, $aData);
 
         if (!$aEvents) {
 
@@ -441,14 +441,14 @@ class Event
      * @param  string $sType The type of event to return
      * @return array
      */
-    public function get_by_type($sType)
+    public function getByType($sType)
     {
         $aData = array(
             'where' => array(
                 array($this->sTablePrefix . '.type', $sType)
             )
         );
-        $aEvents = $this->get_all(null, null, $aData);
+        $aEvents = $this->getAll(null, null, $aData);
 
         if (!$aEvents) {
 
@@ -465,14 +465,14 @@ class Event
      * @param  integer $iUserId The ID of the user
      * @return array
      */
-    public function get_by_user($iUserId)
+    public function getByUser($iUserId)
     {
         $aData = array(
             'where' => array(
                 array($this->sTablePrefix . '.created_by', $iUserId)
             )
         );
-        $aEvents = $this->get_all(null, null, $aData);
+        $aEvents = $this->getAll(null, null, $aData);
 
         if (!$aEvents) {
 
@@ -531,7 +531,7 @@ class Event
      * @param  stdClass $oObj The event object to format
      * @return void
      */
-    protected function _format_object(&$oObj)
+    protected function formatObject(&$oObj)
     {
         //  Ints
         $oObj->ref = $oObj->ref ? (int) $oObj->ref : null;
