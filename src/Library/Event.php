@@ -156,7 +156,7 @@ class Event
 
         if (empty($sType)) {
 
-            $this->_set_error('Event type not defined.');
+            $this->setError('Event type not defined.');
             return false;
         }
 
@@ -164,7 +164,7 @@ class Event
 
         if (!is_string($sType)) {
 
-            $this->_set_error('Event type must be a string.');
+            $this->setError('Event type must be a string.');
             return false;
         }
 
@@ -213,7 +213,7 @@ class Event
 
         if (!$this->oDb->affected_rows()) {
 
-            $this->_set_error('Event could not be created');
+            $this->setError('Event could not be created');
             return false;
 
         } else {
@@ -283,7 +283,7 @@ class Event
     {
         if (empty($iId)) {
 
-            $this->_set_error('Event ID not defined.');
+            $this->setError('Event ID not defined.');
             return false;
         }
 
@@ -299,7 +299,7 @@ class Event
 
         } else {
 
-            $this->_set_error('Event failed to delete');
+            $this->setError('Event failed to delete');
             return false;
         }
     }
