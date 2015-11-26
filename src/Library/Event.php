@@ -406,7 +406,7 @@ class Event
      */
     public function countAll($aData)
     {
-        $this->getCountCommonEvent($aData, 'COUNT_ALL');
+        $this->getCountCommonEvent($aData);
         return $this->oDb->count_all_results($this->sTable . ' ' . $this->sTablePrefix);
     }
 
