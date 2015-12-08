@@ -191,7 +191,7 @@ class Event
         $aCreateData['type']       = $sType;
         $aCreateData['created_by'] = $iCreatedBy;
         $aCreateData['url']        = uri_string();
-        $aCreateData['data']       = $mData ? serialize($mData) : null;
+        $aCreateData['data']       = $mData ? json_encode($mData) : null;
         $aCreateData['ref']        = (int) $iRef;
         $aCreateData['ref']        = $aCreateData['ref'] ? $aCreateData['ref'] : null;
 
@@ -551,7 +551,7 @@ class Event
         $oObj->type = $temp;
 
         //  Data
-        $oObj->data = unserialize($oObj->data);
+        $oObj->data = json_decode($oObj->data);
 
         //  User
         $oObj->user              = new \stdClass();
