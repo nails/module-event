@@ -313,7 +313,7 @@ class Event
      * @param  array   $aData    Any data to pass to _getcount_common
      * @return mixed
      */
-    public function getAll($iPage = null, $iPerPage = null, $aData = array())
+    public function getAllRawQuery($iPage = null, $iPerPage = null, $aData = array())
     {
         //  Fetch all objects from the table
         $this->oDb->select($this->sTablePrefix . '.*');
@@ -342,24 +342,29 @@ class Event
             $this->oDb->limit($iPerPage, $iOffset);
         }
 
-        // --------------------------------------------------------------------------
+        return $this->oDb->get($this->sTable . ' ' . $this->sTablePrefix);
+    }
 
-        if (empty($aData['RETURN_QUERY_OBJECT'])) {
+    // --------------------------------------------------------------------------
 
-            $aEvents = $this->oDb->get($this->sTable . ' ' . $this->sTablePrefix)->result();
+    /**
+     * Fetches all emails from the archive and formats them, optionally paginated
+     * @param int    $iPage    The page number of the results, if null then no pagination
+     * @param int    $iPerPage How many items per page of paginated results
+     * @param mixed  $aData    Any data to pass to getCountCommon()
+     * @return array
+     */
+    public function getAll($iPage = null, $iPerPage = null, $aData = array())
+    {
+        $oResults   = $this->getAllRawQuery($iPage, $iPerPage, $aData);
+        $aResults   = $oResults->result();
+        $numResults = count($aResults);
 
-            for ($i = 0; $i < count($aEvents); $i++) {
-
-                //  Format the object, make it pretty
-                $this->formatObject($aEvents[$i]);
-            }
-
-            return $aEvents;
-
-        } else {
-
-            return $this->oDb->get($this->sTable . ' ' . $this->sTablePrefix);
+        for ($i = 0; $i < $numResults; $i++) {
+            $this->formatObject($aResults[$i], $aData);
         }
+
+        return $aResults;
     }
 
     // --------------------------------------------------------------------------
