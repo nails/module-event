@@ -311,7 +311,7 @@ class Event
      * @param  integer $iPage    The page of objects to return
      * @param  integer $iPerPage The number of objects per page
      * @param  array   $aData    Any data to pass to _getcount_common
-     * @return mixed
+     * @return object
      */
     public function getAllRawQuery($iPage = null, $iPerPage = null, $aData = array())
     {
