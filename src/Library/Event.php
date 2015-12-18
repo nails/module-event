@@ -12,6 +12,8 @@
 
 namespace Nails\Event\Library;
 
+use Nails\Common\Exception\ModelException;
+
 class Event
 {
     use \Nails\Common\Traits\ErrorHandling;
@@ -148,14 +150,12 @@ class Event
          */
 
         if (strtoupper(ENVIRONMENT) == 'PRODUCTION' && $this->oUserModel->wasAdmin()) {
-
             return true;
         }
 
         // --------------------------------------------------------------------------
 
         if (empty($sType)) {
-
             $this->setError('Event type not defined.');
             return false;
         }
@@ -163,7 +163,6 @@ class Event
         // --------------------------------------------------------------------------
 
         if (!is_string($sType)) {
-
             $this->setError('Event type must be a string.');
             return false;
         }
@@ -172,8 +171,7 @@ class Event
 
         //  Get the event type
         if (!isset($this->aEventTypes[$sType])) {
-
-            show_error('Unrecognised event type.');
+            throw new EventException('Unrecognised event type', 1);
         }
 
         // --------------------------------------------------------------------------
