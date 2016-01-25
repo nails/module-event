@@ -12,6 +12,7 @@
 
 namespace Nails\Event\Library;
 
+use Nails\Environment;
 use Nails\Common\Exception\ModelException;
 
 class Event
@@ -149,7 +150,7 @@ class Event
          * production only, all other environments should generate events so they can be tested.
          */
 
-        if (strtoupper(ENVIRONMENT) == 'PRODUCTION' && $this->oUserModel->wasAdmin()) {
+        if (Environment::is('PRODUCTION') && $this->oUserModel->wasAdmin()) {
             return true;
         }
 
