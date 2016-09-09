@@ -27,7 +27,7 @@ class Event
     private $oUserModel;
     private $aEventTypes;
     private $sTable;
-    private $sTablePrefix;
+    private $sTableAlias;
 
     // --------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ class Event
         //  Set defaults
         $this->aEventTypes = array();
         $this->sTable = NAILS_DB_PREFIX . 'event';
-        $this->sTablePrefix = 'e';
+        $this->sTableAlias = 'e';
 
         // --------------------------------------------------------------------------
 
@@ -315,7 +315,7 @@ class Event
     public function getAllRawQuery($iPage = null, $iPerPage = null, $aData = array())
     {
         //  Fetch all objects from the table
-        $this->oDb->select($this->sTablePrefix . '.*');
+        $this->oDb->select($this->sTableAlias . '.*');
         $this->oDb->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
 
         //  Apply common items; pass $aData
@@ -341,7 +341,7 @@ class Event
             $this->oDb->limit($iPerPage, $iOffset);
         }
 
-        return $this->oDb->get($this->sTable . ' ' . $this->sTablePrefix);
+        return $this->oDb->get($this->sTable . ' ' . $this->sTableAlias);
     }
 
     // --------------------------------------------------------------------------
@@ -386,7 +386,7 @@ class Event
             $sToSlug = strtolower(str_replace(' ', '_', $aData['keywords']));
 
             $aData['or_like'][] = array(
-                'column' => $this->sTablePrefix . '.type',
+                'column' => $this->sTableAlias . '.type',
                 'value'  => $sToSlug
             );
             $aData['or_like'][] = array(
@@ -396,7 +396,7 @@ class Event
         }
 
         //  Common joins
-        $this->oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTablePrefix . '.created_by = u.id', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTableAlias . '.created_by = u.id', 'LEFT');
         $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
 
         $this->getCountCommon($aData);
@@ -411,7 +411,7 @@ class Event
     public function countAll($aData)
     {
         $this->getCountCommonEvent($aData);
-        return $this->oDb->count_all_results($this->sTable . ' ' . $this->sTablePrefix);
+        return $this->oDb->count_all_results($this->sTable . ' ' . $this->sTableAlias);
     }
 
     // --------------------------------------------------------------------------
@@ -425,7 +425,7 @@ class Event
     {
         $aData = array(
             'where' => array(
-                array($this->sTablePrefix . '.id', $iId)
+                array($this->sTableAlias . '.id', $iId)
             )
         );
         $aEvents = $this->getAll(null, null, $aData);
@@ -449,7 +449,7 @@ class Event
     {
         $aData = array(
             'where' => array(
-                array($this->sTablePrefix . '.type', $sType)
+                array($this->sTableAlias . '.type', $sType)
             )
         );
         $aEvents = $this->getAll(null, null, $aData);
@@ -473,7 +473,7 @@ class Event
     {
         $aData = array(
             'where' => array(
-                array($this->sTablePrefix . '.created_by', $iUserId)
+                array($this->sTableAlias . '.created_by', $iUserId)
             )
         );
         $aEvents = $this->getAll(null, null, $aData);
@@ -588,11 +588,11 @@ class Event
     // --------------------------------------------------------------------------
 
     /**
-     * Returns protected property $tablePrefix
+     * Returns protected property $tableAlias
      * @return string
      */
     public function getTableAlias()
     {
-        return $this->sTablePrefix;
+        return $this->sTableAlias;
     }
 }
