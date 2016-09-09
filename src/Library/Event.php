@@ -591,7 +591,7 @@ class Event
      * Returns protected property $tablePrefix
      * @return string
      */
-    public function getTablePrefix()
+    public function getTableAlias()
     {
         return $this->sTablePrefix;
     }
