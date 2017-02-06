@@ -71,7 +71,7 @@ class Event
         }
 
         //  Finally, look for app email types
-        $sPath = FCPATH . APPPATH . 'config/event_types.php';
+        $sPath = APPPATH . 'config/event_types.php';
 
         if (file_exists($sPath)) {
 
