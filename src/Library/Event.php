@@ -22,7 +22,6 @@ class Event
 
     // --------------------------------------------------------------------------
 
-    private $oCi;
     private $oDb;
     private $oUserModel;
     private $aEventTypes;
@@ -36,9 +35,8 @@ class Event
      */
     public function __construct()
     {
-        $this->oCi =& get_instance();
-        $this->oDb =& $this->oCi->db;
-        $this->oUserModel =& $this->oCi->user_model;
+        $this->oDb        = Factory::service('Database');
+        $this->oUserModel = Factory::service('User', 'nailsapp/module-auth');
 
         // --------------------------------------------------------------------------
 
