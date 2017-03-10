@@ -151,7 +151,7 @@ class Event
          * production only, all other environments should generate events so they can be tested.
          */
 
-        if (Environment::is('PRODUCTION') && $this->oUserModel->wasAdmin()) {
+        if (Environment::is('PRODUCTION') && wasAdmin()) {
             return true;
         }
 
