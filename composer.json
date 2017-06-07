@@ -41,11 +41,7 @@
             "type": "module",
             "namespace": "Nails\\Event\\",
             "autoload": {
-                "services": [
-                    {
-                        "event": "Event"
-                    }
-                ],
+                "services": ["Event"],
                 "helpers": ["event"]
             }
         }
