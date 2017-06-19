@@ -14,8 +14,8 @@ namespace Nails\Event\Library;
 
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Common\Traits\GetCountCommon;
-use Nails\Event\Exception\EventException;
 use Nails\Environment;
+use Nails\Event\Exception\EventException;
 use Nails\Factory;
 
 class Event
@@ -25,8 +25,6 @@ class Event
 
     // --------------------------------------------------------------------------
 
-    private $oDb;
-    private $oUserModel;
     private $aEventTypes;
     private $sTable;
     private $sTableAlias;
@@ -38,11 +36,6 @@ class Event
      */
     public function __construct()
     {
-        $this->oDb        = Factory::service('Database');
-        $this->oUserModel = Factory::model('User', 'nailsapp/module-auth');
-
-        // --------------------------------------------------------------------------
-
         //  Set defaults
         $this->aEventTypes = [];
         $this->sTable      = NAILS_DB_PREFIX . 'event';
@@ -86,7 +79,6 @@ class Event
 
     // --------------------------------------------------------------------------
 
-
     /**
      * Adds a new event type to the stack
      *
@@ -106,11 +98,11 @@ class Event
 
         if (is_string($mSlug)) {
 
-            $this->aEventTypes[$slug]              = new \stdClass();
-            $this->aEventTypes[$slug]->slug        = $mSlug;
-            $this->aEventTypes[$slug]->label       = $sLabel;
-            $this->aEventTypes[$slug]->description = $sDescription;
-            $this->aEventTypes[$slug]->hooks       = $aHooks;
+            $this->aEventTypes[$mSlug]              = new \stdClass();
+            $this->aEventTypes[$mSlug]->slug        = $mSlug;
+            $this->aEventTypes[$mSlug]->label       = $sLabel;
+            $this->aEventTypes[$mSlug]->description = $sDescription;
+            $this->aEventTypes[$mSlug]->hooks       = $aHooks;
 
         } else {
 
@@ -194,20 +186,21 @@ class Event
         $aCreateData['ref']        = (int) $iRef;
         $aCreateData['ref']        = $aCreateData['ref'] ? $aCreateData['ref'] : null;
 
-        $this->oDb->set($aCreateData);
+        $oDb = Factory::service('Database');
+        $oDb->set($aCreateData);
 
         if ($sRecorded) {
             $aCreateData['created'] = date('Y-m-d H:i:s', strtotime($sRecorded));
         } else {
-            $this->oDb->set('created', 'NOW()', false);
+            $oDb->set('created', 'NOW()', false);
         }
 
         //  Create the event
-        $this->oDb->insert($this->sTable);
+        $oDb->insert($this->sTable);
 
         // --------------------------------------------------------------------------
 
-        if (!$this->oDb->affected_rows()) {
+        if (!$oDb->affected_rows()) {
 
             $this->setError('Event could not be created');
             return false;
@@ -233,7 +226,7 @@ class Event
                         continue;
                     }
 
-                    $class    = new $hook['class'];
+                    $class    = new $hook['class']();
                     $iReflect = new \ReflectionClass($class);
 
                     try {
@@ -254,7 +247,7 @@ class Event
                 }
             }
 
-            return $this->oDb->insert_id();
+            return $oDb->insert_id();
         }
     }
 
@@ -277,10 +270,11 @@ class Event
         // -------------------------------------------------------------------------
 
         //  Perform delete
-        $this->oDb->where('id', $iId);
-        $this->oDb->delete($this->sTable);
+        $oDb = Factory::service('Database');
+        $oDb->where('id', $iId);
+        $oDb->delete($this->sTable);
 
-        if ($this->oDb->affected_rows()) {
+        if ($oDb->affected_rows()) {
             return true;
         } else {
             $this->setError('Event failed to delete');
@@ -302,8 +296,9 @@ class Event
     public function getAllRawQuery($iPage = null, $iPerPage = null, $aData = [])
     {
         //  Fetch all objects from the table
-        $this->oDb->select($this->sTableAlias . '.*');
-        $this->oDb->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
+        $oDb = Factory::service('Database');
+        $oDb->select($this->sTableAlias . '.*');
+        $oDb->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
 
         //  Apply common items; pass $aData
         $this->getCountCommonEvent($aData);
@@ -325,10 +320,10 @@ class Event
             $iPerPage = is_null($iPerPage) ? 50 : (int) $iPerPage;
             $iOffset  = $iPage * $iPerPage;
 
-            $this->oDb->limit($iPerPage, $iOffset);
+            $oDb->limit($iPerPage, $iOffset);
         }
 
-        return $this->oDb->get($this->sTable . ' ' . $this->sTableAlias);
+        return $oDb->get($this->sTable . ' ' . $this->sTableAlias);
     }
 
     // --------------------------------------------------------------------------
@@ -349,7 +344,7 @@ class Event
         $numResults = count($aResults);
 
         for ($i = 0; $i < $numResults; $i++) {
-            $this->formatObject($aResults[$i], $aData);
+            $this->formatObject($aResults[$i]);
         }
 
         return $aResults;
@@ -385,8 +380,9 @@ class Event
         }
 
         //  Common joins
-        $this->oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTableAlias . '.created_by = u.id', 'LEFT');
-        $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
+        $oDb = Factory::service('Database');
+        $oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTableAlias . '.created_by = u.id', 'LEFT');
+        $oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
 
         $this->getCountCommon($aData);
     }
@@ -395,12 +391,16 @@ class Event
 
     /**
      * Count the total number of events for a certain query
+     *
+     * @param $aData
+     *
      * @return int
      */
     public function countAll($aData)
     {
         $this->getCountCommonEvent($aData);
-        return $this->oDb->count_all_results($this->sTable . ' ' . $this->sTableAlias);
+        $oDb = Factory::service('Database');
+        return $oDb->count_all_results($this->sTable . ' ' . $this->sTableAlias);
     }
 
     // --------------------------------------------------------------------------
@@ -414,15 +414,13 @@ class Event
      */
     public function getById($iId)
     {
-        $aData   = [
+        $aEvents = $this->getAll([
             'where' => [
                 [$this->sTableAlias . '.id', $iId],
             ],
-        ];
-        $aEvents = $this->getAll(null, null, $aData);
+        ]);
 
         if (!$aEvents) {
-
             return false;
         }
 
@@ -440,15 +438,13 @@ class Event
      */
     public function getByType($sType)
     {
-        $aData   = [
+        $aEvents = $this->getAll([
             'where' => [
                 [$this->sTableAlias . '.type', $sType],
             ],
-        ];
-        $aEvents = $this->getAll(null, null, $aData);
+        ]);
 
         if (!$aEvents) {
-
             return false;
         }
 
@@ -466,15 +462,13 @@ class Event
      */
     public function getByUser($iUserId)
     {
-        $aData   = [
+        $aEvents = $this->getAll([
             'where' => [
                 [$this->sTableAlias . '.created_by', $iUserId],
             ],
-        ];
-        $aEvents = $this->getAll(null, null, $aData);
+        ]);
 
         if (!$aEvents) {
-
             return false;
         }
 
@@ -518,7 +512,6 @@ class Event
         $aOut   = [];
 
         foreach ($aTypes as $oType) {
-
             $aOut[$oType->slug] = $oType->label ? $oType->label : title_case(str_replace('_', ' ', $oType->slug));
         }
 
