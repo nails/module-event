@@ -12,19 +12,19 @@
 
 namespace Nails\Event\Library;
 
+use Nails\Common\Traits\ErrorHandling;
+use Nails\Common\Traits\GetCountCommon;
 use Nails\Environment;
-use Nails\Common\Exception\ModelException;
+use Nails\Event\Exception\EventException;
+use Nails\Factory;
 
 class Event
 {
-    use \Nails\Common\Traits\ErrorHandling;
-    use \Nails\Common\Traits\GetCountCommon;
+    use ErrorHandling;
+    use GetCountCommon;
 
     // --------------------------------------------------------------------------
 
-    private $oCi;
-    private $oDb;
-    private $oUserModel;
     private $aEventTypes;
     private $sTable;
     private $sTableAlias;
@@ -36,15 +36,9 @@ class Event
      */
     public function __construct()
     {
-        $this->oCi =& get_instance();
-        $this->oDb =& $this->oCi->db;
-        $this->oUserModel =& $this->oCi->user_model;
-
-        // --------------------------------------------------------------------------
-
         //  Set defaults
-        $this->aEventTypes = array();
-        $this->sTable = NAILS_DB_PREFIX . 'event';
+        $this->aEventTypes = [];
+        $this->sTable      = NAILS_DB_PREFIX . 'event';
         $this->sTableAlias = 'e';
 
         // --------------------------------------------------------------------------
@@ -61,9 +55,7 @@ class Event
                 include $sPath;
 
                 if (!empty($config['event_types'])) {
-
                     foreach ($config['event_types'] as $oType) {
-
                         $this->addType($oType);
                     }
                 }
@@ -78,9 +70,7 @@ class Event
             include $sPath;
 
             if (!empty($config['event_types'])) {
-
                 foreach ($config['event_types'] as $oType) {
-
                     $this->addType($oType);
                 }
             }
@@ -89,35 +79,34 @@ class Event
 
     // --------------------------------------------------------------------------
 
-
     /**
      * Adds a new event type to the stack
-     * @param  mixed $mSlug         The event's slug; calling code refers to events
+     *
+     * @param  mixed  $mSlug        The event's slug; calling code refers to events
      *                              by this value. Alternatively pass a stdClass to set all values.
      * @param  string $sLabel       The human friendly name to give the event
      * @param  string $sDescription The human friendly description of the event's purpose
-     * @param  array $aHooks        An array of hooks to fire when an event is fired
+     * @param  array  $aHooks       An array of hooks to fire when an event is fired
+     *
      * @return boolean
      */
-    public function addType($mSlug, $sLabel = '', $sDescription = '', $aHooks = array())
+    public function addType($mSlug, $sLabel = '', $sDescription = '', $aHooks = [])
     {
         if (empty($mSlug)) {
-
             return false;
         }
 
         if (is_string($mSlug)) {
 
-            $this->aEventTypes[$slug]              = new \stdClass();
-            $this->aEventTypes[$slug]->slug        = $mSlug;
-            $this->aEventTypes[$slug]->label       = $sLabel;
-            $this->aEventTypes[$slug]->description = $sDescription;
-            $this->aEventTypes[$slug]->hooks       = $aHooks;
+            $this->aEventTypes[$mSlug]              = new \stdClass();
+            $this->aEventTypes[$mSlug]->slug        = $mSlug;
+            $this->aEventTypes[$mSlug]->label       = $sLabel;
+            $this->aEventTypes[$mSlug]->description = $sDescription;
+            $this->aEventTypes[$mSlug]->hooks       = $aHooks;
 
         } else {
 
             if (empty($mSlug->slug)) {
-
                 return false;
             }
 
@@ -135,12 +124,16 @@ class Event
 
     /**
      * Creates an event object
+     *
      * @param  string  $sType      The type of event to create
      * @param  mixed   $mData      Any data to store alongside the event object
      * @param  integer $iCreatedBy The event creator (null == system)
      * @param  integer $iRef       A numeric reference to store alongside the event
      *                             (e.g the id of the object the event relates to)
-     * @param  string  $sRecorded  A strtotime() friendly string of the date to use instead of NOW() for the created date
+     * @param  string  $sRecorded  A strtotime() friendly string of the date to use instead of NOW() for the created
+     *                             date
+     *
+     * @throws EventException
      * @return mixed               Int on success false on failure
      */
     public function create($sType, $mData = null, $iCreatedBy = null, $iRef = null, $sRecorded = null)
@@ -150,7 +143,7 @@ class Event
          * production only, all other environments should generate events so they can be tested.
          */
 
-        if (Environment::is('PRODUCTION') && $this->oUserModel->wasAdmin()) {
+        if (Environment::is('PRODUCTION') && wasAdmin()) {
             return true;
         }
 
@@ -179,14 +172,13 @@ class Event
 
         //  Prep created by
         if (empty($iCreatedBy)) {
-
             $iCreatedBy = activeUser('id') ? (int) activeUser('id') : null;
         }
 
         // --------------------------------------------------------------------------
 
         //  Prep data
-        $aCreateData               = array();
+        $aCreateData               = [];
         $aCreateData['type']       = $sType;
         $aCreateData['created_by'] = $iCreatedBy;
         $aCreateData['url']        = uri_string();
@@ -194,23 +186,21 @@ class Event
         $aCreateData['ref']        = (int) $iRef;
         $aCreateData['ref']        = $aCreateData['ref'] ? $aCreateData['ref'] : null;
 
-        $this->oDb->set($aCreateData);
+        $oDb = Factory::service('Database');
+        $oDb->set($aCreateData);
 
         if ($sRecorded) {
-
             $aCreateData['created'] = date('Y-m-d H:i:s', strtotime($sRecorded));
-
         } else {
-
-            $this->oDb->set('created', 'NOW()', false);
+            $oDb->set('created', 'NOW()', false);
         }
 
         //  Create the event
-        $this->oDb->insert($this->sTable);
+        $oDb->insert($this->sTable);
 
         // --------------------------------------------------------------------------
 
-        if (!$this->oDb->affected_rows()) {
+        if (!$oDb->affected_rows()) {
 
             $this->setError('Event could not be created');
             return false;
@@ -223,51 +213,41 @@ class Event
                 foreach ($this->aEventTypes[$sType]->hooks as $hook) {
 
                     if (empty($hook['path'])) {
-
                         continue;
                     }
 
                     if (!file_exists($hook['path'])) {
-
                         continue;
                     }
 
                     include_once $hook['path'];
 
                     if (!class_exists($hook['class'])) {
-
                         continue;
                     }
 
-                    $class    = new $hook['class'];
-                    $iReflect = new ReflectionClass($class);
+                    $class    = new $hook['class']();
+                    $iReflect = new \ReflectionClass($class);
 
                     try {
-
                         $method = $iReflect->getMethod($hook['method']);
-
-                    } catch (Exception $e) {
-
+                    } catch (\Exception $e) {
                         continue;
                     }
 
                     if (!$method->isPublic() && !$method->isStatic()) {
-
                         continue;
                     }
 
                     if ($method->isStatic()) {
-
                         $hook['class']::$hook['method']($sType, $aCreateData);
-
                     } else {
-
                         $class->$hook['method']($sType, $aCreateData);
                     }
                 }
             }
 
-            return $this->oDb->insert_id();
+            return $oDb->insert_id();
         }
     }
 
@@ -275,13 +255,14 @@ class Event
 
     /**
      * Destroys an event object
-     * @param  integer $id The event ID
+     *
+     * @param  integer $iId The event ID
+     *
      * @return boolean
      */
     public function destroy($iId)
     {
         if (empty($iId)) {
-
             $this->setError('Event ID not defined.');
             return false;
         }
@@ -289,15 +270,13 @@ class Event
         // -------------------------------------------------------------------------
 
         //  Perform delete
-        $this->oDb->where('id', $iId);
-        $this->oDb->delete($this->sTable);
+        $oDb = Factory::service('Database');
+        $oDb->where('id', $iId);
+        $oDb->delete($this->sTable);
 
-        if ($this->oDb->affected_rows()) {
-
+        if ($oDb->affected_rows()) {
             return true;
-
         } else {
-
             $this->setError('Event failed to delete');
             return false;
         }
@@ -307,16 +286,19 @@ class Event
 
     /**
      * Returns all event objects.
+     *
      * @param  integer $iPage    The page of objects to return
      * @param  integer $iPerPage The number of objects per page
-     * @param  array   $aData    Any data to pass to _getcount_common
+     * @param  array   $aData    Any data to pass to getCountCommon
+     *
      * @return object
      */
-    public function getAllRawQuery($iPage = null, $iPerPage = null, $aData = array())
+    public function getAllRawQuery($iPage = null, $iPerPage = null, $aData = [])
     {
         //  Fetch all objects from the table
-        $this->oDb->select($this->sTableAlias . '.*');
-        $this->oDb->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
+        $oDb = Factory::service('Database');
+        $oDb->select($this->sTableAlias . '.*');
+        $oDb->select('ue.email,u.first_name,u.last_name,u.profile_img,u.gender');
 
         //  Apply common items; pass $aData
         $this->getCountCommonEvent($aData);
@@ -338,29 +320,31 @@ class Event
             $iPerPage = is_null($iPerPage) ? 50 : (int) $iPerPage;
             $iOffset  = $iPage * $iPerPage;
 
-            $this->oDb->limit($iPerPage, $iOffset);
+            $oDb->limit($iPerPage, $iOffset);
         }
 
-        return $this->oDb->get($this->sTable . ' ' . $this->sTableAlias);
+        return $oDb->get($this->sTable . ' ' . $this->sTableAlias);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Fetches all emails from the archive and formats them, optionally paginated
-     * @param int    $iPage    The page number of the results, if null then no pagination
-     * @param int    $iPerPage How many items per page of paginated results
-     * @param mixed  $aData    Any data to pass to getCountCommon()
+     *
+     * @param int   $iPage    The page number of the results, if null then no pagination
+     * @param int   $iPerPage How many items per page of paginated results
+     * @param mixed $aData    Any data to pass to getCountCommon()
+     *
      * @return array
      */
-    public function getAll($iPage = null, $iPerPage = null, $aData = array())
+    public function getAll($iPage = null, $iPerPage = null, $aData = [])
     {
         $oResults   = $this->getAllRawQuery($iPage, $iPerPage, $aData);
         $aResults   = $oResults->result();
         $numResults = count($aResults);
 
         for ($i = 0; $i < $numResults; $i++) {
-            $this->formatObject($aResults[$i], $aData);
+            $this->formatObject($aResults[$i]);
         }
 
         return $aResults;
@@ -371,33 +355,34 @@ class Event
     /**
      * This method applies the conditionals which are common across the get_*()
      * methods and the count() method.
-     * @param array  $aData   Data passed from the calling method
+     *
+     * @param array $aData Data passed from the calling method
+     *
      * @return void
      **/
-    protected function getCountCommonEvent($aData = array())
+    protected function getCountCommonEvent($aData = [])
     {
         if (!empty($aData['keywords'])) {
-
             if (empty($aData['or_like'])) {
-
-                $aData['or_like'] = array();
+                $aData['or_like'] = [];
             }
 
             $sToSlug = strtolower(str_replace(' ', '_', $aData['keywords']));
 
-            $aData['or_like'][] = array(
+            $aData['or_like'][] = [
                 'column' => $this->sTableAlias . '.type',
-                'value'  => $sToSlug
-            );
-            $aData['or_like'][] = array(
+                'value'  => $sToSlug,
+            ];
+            $aData['or_like'][] = [
                 'column' => 'ue.email',
-                'value'  => $aData['keywords']
-            );
+                'value'  => $aData['keywords'],
+            ];
         }
 
         //  Common joins
-        $this->oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTableAlias . '.created_by = u.id', 'LEFT');
-        $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
+        $oDb = Factory::service('Database');
+        $oDb->join(NAILS_DB_PREFIX . 'user u', $this->sTableAlias . '.created_by = u.id', 'LEFT');
+        $oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = u.id AND ue.is_primary = 1', 'LEFT');
 
         $this->getCountCommon($aData);
     }
@@ -406,32 +391,36 @@ class Event
 
     /**
      * Count the total number of events for a certain query
+     *
+     * @param $aData
+     *
      * @return int
      */
     public function countAll($aData)
     {
         $this->getCountCommonEvent($aData);
-        return $this->oDb->count_all_results($this->sTable . ' ' . $this->sTableAlias);
+        $oDb = Factory::service('Database');
+        return $oDb->count_all_results($this->sTable . ' ' . $this->sTableAlias);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Return an individual event
+     *
      * @param  integer $iId The event's ID
+     *
      * @return mixed        stdClass on success, false on failure
      */
     public function getById($iId)
     {
-        $aData = array(
-            'where' => array(
-                array($this->sTableAlias . '.id', $iId)
-            )
-        );
-        $aEvents = $this->getAll(null, null, $aData);
+        $aEvents = $this->getAll([
+            'where' => [
+                [$this->sTableAlias . '.id', $iId],
+            ],
+        ]);
 
         if (!$aEvents) {
-
             return false;
         }
 
@@ -442,20 +431,20 @@ class Event
 
     /**
      * Returns events of a particular type
+     *
      * @param  string $sType The type of event to return
-     * @return array
+     *
+     * @return boolean|array
      */
     public function getByType($sType)
     {
-        $aData = array(
-            'where' => array(
-                array($this->sTableAlias . '.type', $sType)
-            )
-        );
-        $aEvents = $this->getAll(null, null, $aData);
+        $aEvents = $this->getAll([
+            'where' => [
+                [$this->sTableAlias . '.type', $sType],
+            ],
+        ]);
 
         if (!$aEvents) {
-
             return false;
         }
 
@@ -466,20 +455,20 @@ class Event
 
     /**
      * Returns events created by a user
+     *
      * @param  integer $iUserId The ID of the user
-     * @return array
+     *
+     * @return boolean|array
      */
     public function getByUser($iUserId)
     {
-        $aData = array(
-            'where' => array(
-                array($this->sTableAlias . '.created_by', $iUserId)
-            )
-        );
-        $aEvents = $this->getAll(null, null, $aData);
+        $aEvents = $this->getAll([
+            'where' => [
+                [$this->sTableAlias . '.created_by', $iUserId],
+            ],
+        ]);
 
         if (!$aEvents) {
-
             return false;
         }
 
@@ -501,7 +490,9 @@ class Event
 
     /**
      * Get an individual type of event
-     * @param  string $slug The event's slug
+     *
+     * @param  string $sSlug The event's slug
+     *
      * @return mixed        stdClass on success, false on failure
      */
     public function getTypeBySlug($sSlug)
@@ -518,10 +509,9 @@ class Event
     public function getAllTypesFlat()
     {
         $aTypes = $this->getAllTypes();
-        $aOut   = array();
+        $aOut   = [];
 
         foreach ($aTypes as $oType) {
-
             $aOut[$oType->slug] = $oType->label ? $oType->label : title_case(str_replace('_', ' ', $oType->slug));
         }
 
@@ -532,7 +522,9 @@ class Event
 
     /**
      * Formats an event object
-     * @param  stdClass $oObj The event object to format
+     *
+     * @param  \stdClass $oObj The event object to format
+     *
      * @return void
      */
     protected function formatObject(&$oObj)
@@ -545,11 +537,11 @@ class Event
 
         if (empty($temp)) {
 
-            $temp = new \stdClass();
+            $temp              = new \stdClass();
             $temp->slug        = $oObj->type;
             $temp->label       = '';
             $temp->description = '';
-            $temp->hooks       = array();
+            $temp->hooks       = [];
         }
 
         $oObj->type = $temp;
