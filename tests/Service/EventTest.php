@@ -1,6 +1,6 @@
 <?php
 
-namespace Nails\Event\Library;
+namespace Nails\Event\Service;
 
 class EventTest extends \PHPUnit_Framework_TestCase
 {
