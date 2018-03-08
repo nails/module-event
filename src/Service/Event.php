@@ -10,7 +10,7 @@
  * @link
  */
 
-namespace Nails\Event\Library;
+namespace Nails\Event\Service;
 
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Common\Traits\GetCountCommon;
@@ -32,7 +32,7 @@ class Event
     // --------------------------------------------------------------------------
 
     /**
-     * Construct the library
+     * Construct the Service
      */
     public function __construct()
     {
