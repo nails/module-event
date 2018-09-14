@@ -12,7 +12,7 @@
  * @link
  */
 
-namespace Nails\Database\Migration\Nailsapp\ModuleEvent;
+namespace Nails\Database\Migration\Nails\ModuleEvent;
 
 use Nails\Common\Console\Migrate\Base;
 

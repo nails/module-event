@@ -1,5 +1,5 @@
 {
-    "name": "nailsapp/module-event",
+    "name": "nails/module-event",
     "keywords": ["Nails", "Shed Collective", "CodeIgniter", "Event Module"],
     "homepage": "http://nailsapp.co.uk/modules/event",
     "description": "This is the \"Event\" module for Nails.",
@@ -27,7 +27,7 @@
     "prefer-stable": true,
     "require":
     {
-        "nailsapp/common": "dev-develop"
+        "nails/common": "dev-develop"
     },
     "autoload":
     {

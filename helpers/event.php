@@ -27,7 +27,7 @@ if (!function_exists('create_event')) {
      */
     function create_event($sType, $aData = null, $iCreatedBy = null, $iRef = null, $sRecorded = null)
     {
-        $oEvent = Factory::service('Event', 'nailsapp/module-event');
+        $oEvent = Factory::service('Event', 'nails/module-event');
         return $oEvent->create($sType, $aData, $iCreatedBy, $iRef, $sRecorded);
     }
 }
