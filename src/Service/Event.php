@@ -143,7 +143,7 @@ class Event
          * production only, all other environments should generate events so they can be tested.
          */
 
-        if (Environment::is('PRODUCTION') && wasAdmin()) {
+        if (Environment::is(Environment::ENV_PROD) && wasAdmin()) {
             return true;
         }
 
