@@ -14,6 +14,7 @@ namespace Nails\Event\Service;
 
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Common\Traits\GetCountCommon;
+use Nails\Components;
 use Nails\Environment;
 use Nails\Event\Exception\EventException;
 use Nails\Factory;
@@ -44,7 +45,7 @@ class Event
         // --------------------------------------------------------------------------
 
         //  Look for event types defined by enabled modules
-        $aModules = _NAILS_GET_MODULES();
+        $aModules = Components::modules();
 
         foreach ($aModules as $oModule) {
 
