@@ -64,7 +64,7 @@ class Event
         }
 
         //  Finally, look for app email types
-        $sPath = APPPATH . 'config/event_types.php';
+        $sPath = NAILS_APP_PATH . 'application/config/event_types.php';
 
         if (file_exists($sPath)) {
 
